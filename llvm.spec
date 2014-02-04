@@ -1,14 +1,18 @@
 Summary:	Low Level Virtual Machine
 Name:		llvm
-Version:	3.1
+Version:	3.4
 Release:	1
 License:	University of Illinois/NCSA Open Source License
 Group:		Development/Languages
 Source0:	http://llvm.org/releases/%{version}/%{name}-%{version}.src.tar.gz
-# Source0-md5:	16eaa7679f84113f65b12760fdfe4ee1
+# Source0-md5:	46ed668a1ce38985120dbf6344cf6116
 Source1:	http://llvm.org/releases/%{version}/clang-%{version}.src.tar.gz
-# Source1-md5:	59bf2d3120a3805f27cafda3823caaf8
-Patch0:		%{name}-2.6-timestamp.patch
+# Source1-md5:	b378f1e2c424e03289effc75268d3d2c
+Source2:	http://llvm.org/releases/%{version}/compiler-rt-%{version}.src.tar.gz
+# Source2-md5:	7938353e3a3bda85733a165e7ac4bb84
+Patch0:		%{name}-preserve-timestamp.patch
+Patch1:		%{name}-linker.patch
+Patch2:		%{name}-freddix.patch
 URL:		http://llvm.org/
 BuildRequires:	bash
 BuildRequires:	bison
@@ -73,12 +77,17 @@ Requires:	%{name}-clang = %{version}-%{release}
 This package contains header files for the Clang compiler.
 
 %prep
-%setup -q -a1 -n %{name}-%{version}.src
-mv clang-*.* tools/clang
+%setup -q -a1 -a2
+mv clang-%{version} tools/clang
+mv compiler-rt-%{version} projects/compiler-rt
 %patch0 -p1
+%patch1 -p1
+%patch2 -p1
 
 # configure does not properly specify libdir
-sed -i 's|(PROJ_prefix)/lib|(PROJ_prefix)/%{_lib}|g' Makefile.config.in
+%{__sed} -i 's|(PROJ_prefix)/lib|(PROJ_prefix)/%{_lib}|g' Makefile.config.in
+%{__sed} -i 's|/lib /usr/lib $lt_ld_extra|%{_libdir} $lt_ld_extra|' ./configure
+%{__sed} -i 's|/lib\>|/%{_lib}/%{name}|g' tools/llvm-config/llvm-config.cpp
 
 grep -rl /usr/bin/env tools utils | xargs sed -i -e '1{
 	s,^#!.*bin/env python,#!%{__python},
@@ -88,6 +97,9 @@ grep -rl /usr/bin/env tools utils | xargs sed -i -e '1{
 install -d obj
 
 %build
+export CC="%{__cc}"
+export CXX="%{__cxx}"
+
 # Disabling assertions now, rec. by pure and needed for OpenGTL
 # TESTFIX no PIC on ix86: http://llvm.org/bugs/show_bug.cgi?id=3801
 #
@@ -95,20 +107,25 @@ install -d obj
 cd obj
 bash ../%configure \
 	--datadir=%{_datadir}/%{name}-%{version}	\
-	--libdir=%{_libdir}/%{name}			\
-	--disable-assertions				\
-	--disable-expensive-checks			\
-	--disable-static				\
-	--enable-bindings=none				\
-	--enable-debug-runtime				\
-	--enable-jit					\
-	--enable-libffi					\
-	--enable-optimized				\
-	--enable-shared
+	--libdir=%{_libdir}/%{name}	\
+	--disable-assertions		\
+	--disable-debug-runtime		\
+	--disable-expensive-checks	\
+	--disable-expensive-checks	\
+	--disable-libcpp		\
+	--disable-polly			\
+	--disable-static		\
+	--enable-bindings=none		\
+	--enable-jit			\
+	--enable-libffi			\
+	--enable-optimized		\
+	--enable-shared			\
+	--with-binutils-include=%{_includedir}	\
+	--with-optimize-option="%{rpmcflags} %{rpmcppflags}"
 
 %{__make} \
-	OPTIMIZE_OPTION="%{rpmcflags} %{rpmcppflags}"	\
-	REQUIRES_RTTI=1
+	REQUIRES_RTTI=1	\
+	VERBOSE=1
 
 %install
 rm -rf $RPM_BUILD_ROOT
