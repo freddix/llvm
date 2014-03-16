@@ -1,7 +1,7 @@
 Summary:	Low Level Virtual Machine
 Name:		llvm
 Version:	3.4
-Release:	1
+Release:	3
 License:	University of Illinois/NCSA Open Source License
 Group:		Development/Languages
 Source0:	http://llvm.org/releases/%{version}/%{name}-%{version}.src.tar.gz
@@ -20,6 +20,7 @@ BuildRequires:	flex
 BuildRequires:	groff
 BuildRequires:	libltdl-devel
 BuildRequires:	libstdc++-devel
+Requires:	%{name}-libs = %{version}-%{release}
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %define		_sysconfdir	/etc/%{name}
@@ -36,6 +37,13 @@ currently supports compilation of C and C++ programs, using front-ends
 derived from GCC 4.0.1. A new front-end for the C family of languages
 is in development. The compiler infrastructure includes mirror sets of
 programming tools as well as libraries with equivalent functionality.
+
+%package libs
+Summary:	LLVM library
+Group:		Libraries
+
+%description libs
+This package contains LLVM library.
 
 %package devel
 Summary:	Libraries and header files for LLVM
@@ -87,7 +95,7 @@ mv compiler-rt-%{version} projects/compiler-rt
 # configure does not properly specify libdir
 %{__sed} -i 's|(PROJ_prefix)/lib|(PROJ_prefix)/%{_lib}|g' Makefile.config.in
 %{__sed} -i 's|/lib /usr/lib $lt_ld_extra|%{_libdir} $lt_ld_extra|' ./configure
-%{__sed} -i 's|/lib\>|/%{_lib}/%{name}|g' tools/llvm-config/llvm-config.cpp
+%{__sed} -i 's|/lib\>|/%{_lib}|g' tools/llvm-config/llvm-config.cpp
 
 grep -rl /usr/bin/env tools utils | xargs sed -i -e '1{
 	s,^#!.*bin/env python,#!%{__python},
@@ -111,11 +119,11 @@ bash ../%configure \
 	--disable-assertions		\
 	--disable-debug-runtime		\
 	--disable-expensive-checks	\
-	--disable-expensive-checks	\
 	--disable-libcpp		\
 	--disable-polly			\
 	--disable-static		\
 	--enable-bindings=none		\
+	--enable-experimental-targets=R600  \
 	--enable-jit			\
 	--enable-libffi			\
 	--enable-optimized		\
@@ -153,33 +161,38 @@ rm -fv moredocs/ocamldoc/html/*.tar.gz
 %clean
 rm -rf $RPM_BUILD_ROOT
 
-%post	-p /usr/sbin/ldconfig
-%postun	-p /usr/sbin/ldconfig
+%post	libs -p /usr/sbin/ldconfig
+%postun	libs -p /usr/sbin/ldconfig
 
 %files
 %defattr(644,root,root,755)
 %doc CREDITS.TXT LICENSE.TXT README.txt
 %attr(755,root,root) %{_bindir}/bugpoint
 %attr(755,root,root) %{_bindir}/llc
-%attr(755,root,root) %{_bindir}/lli
+%attr(755,root,root) %{_bindir}/lli*
 %attr(755,root,root) %{_bindir}/opt
 %attr(755,root,root) %{_bindir}/llvm-*
 %attr(755,root,root) %{_bindir}/macho-dump
 %exclude %attr(755,root,root) %{_bindir}/llvm-config
-%attr(755,root,root) %{_libdir}/libLLVM-*.*.so
+%if 0
 %{_mandir}/man1/bugpoint.1*
 %{_mandir}/man1/llc.1*
 %{_mandir}/man1/lli.1*
 %{_mandir}/man1/llvm-*.1*
 %{_mandir}/man1/opt.1*
 %{_mandir}/man1/tblgen.1*
+%endif
+
+%files libs
+%defattr(644,root,root,755)
+%attr(755,root,root) %{_libdir}/libLLVM-*.*.so
 
 %files devel
 %defattr(644,root,root,755)
 %attr(755,root,root) %{_bindir}/llvm-config
 %attr(755,root,root) %{_libdir}/BugpointPasses.so
+%attr(755,root,root) %{_libdir}/LLVMgold.so
 %attr(755,root,root) %{_libdir}/libLTO.so
-%attr(755,root,root) %{_libdir}/libprofile_rt.so
 %{_includedir}/llvm
 %{_includedir}/llvm-c
 %{_libdir}/lib*.a
@@ -187,7 +200,6 @@ rm -rf $RPM_BUILD_ROOT
 %files clang
 %defattr(644,root,root,755)
 %attr(755,root,root) %{_bindir}/clang*
-%attr(755,root,root) %{_bindir}/clang-tblgen
 %attr(755,root,root) %{_libdir}/libclang.so
 %{_prefix}/lib/clang
 %{_mandir}/man1/clang.1.*
