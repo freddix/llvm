@@ -1,14 +1,16 @@
+%define		base_ver    3.4
+
 Summary:	Low Level Virtual Machine
 Name:		llvm
-Version:	3.4
-Release:	3
+Version:	%{base_ver}.1
+Release:	1
 License:	University of Illinois/NCSA Open Source License
 Group:		Development/Languages
 Source0:	http://llvm.org/releases/%{version}/%{name}-%{version}.src.tar.gz
-# Source0-md5:	46ed668a1ce38985120dbf6344cf6116
-Source1:	http://llvm.org/releases/%{version}/clang-%{version}.src.tar.gz
-# Source1-md5:	b378f1e2c424e03289effc75268d3d2c
-Source2:	http://llvm.org/releases/%{version}/compiler-rt-%{version}.src.tar.gz
+# Source0-md5:	b90697f4de35563ad6c35924defa8dd1
+Source1:	http://llvm.org/releases/%{version}/cfe-%{version}.src.tar.gz
+# Source1-md5:	c64fdc567383211c9ac212d6f7b69263
+Source2:	http://llvm.org/releases/3.4/compiler-rt-3.4.src.tar.gz
 # Source2-md5:	7938353e3a3bda85733a165e7ac4bb84
 Patch0:		%{name}-preserve-timestamp.patch
 Patch1:		%{name}-linker.patch
@@ -85,9 +87,9 @@ Requires:	%{name}-clang = %{version}-%{release}
 This package contains header files for the Clang compiler.
 
 %prep
-%setup -q -a1 -a2
-mv clang-%{version} tools/clang
-mv compiler-rt-%{version} projects/compiler-rt
+%setup -qn %{name}-%{version}.src -a1 -a2
+mv cfe-%{version}.src tools/clang
+mv compiler-rt-3.4 projects/compiler-rt
 %patch0 -p1
 %patch1 -p1
 %patch2 -p1
@@ -144,19 +146,21 @@ rm -rf $RPM_BUILD_ROOT
 # Static analyzer not installed by default:
 # http://clang-analyzer.llvm.org/installation#OtherPlatforms
 install -d $RPM_BUILD_ROOT%{_libdir}/clang-analyzer
+
 # create launchers
 for f in scan-{build,view}; do
 	ln -s %{_libdir}/clang-analyzer/$f/$f $RPM_BUILD_ROOT%{_bindir}/$f
 	cp -pr tools/clang/tools/$f $RPM_BUILD_ROOT%{_libdir}/clang-analyzer
 done
 
-rm -v $RPM_BUILD_ROOT%{_libdir}/*LLVMHello.*
+%{__rm} $RPM_BUILD_ROOT%{_libdir}/*LLVMHello.*
 
 # Move documentation back to build directory
-rm -rf moredocs
-mv $RPM_BUILD_ROOT/moredocs .
-rm -fv moredocs/*.tar.gz
-rm -fv moredocs/ocamldoc/html/*.tar.gz
+%{__mv} $RPM_BUILD_ROOT/moredocs .
+%{__rm} moredocs/*.tar.gz
+
+%{__rm} $RPM_BUILD_ROOT%{_libdir}/libLLVM-%{base_ver}.so
+ln -s libLLVM-%{version}.so $RPM_BUILD_ROOT%{_libdir}/libLLVM-%{base_ver}.so
 
 %clean
 rm -rf $RPM_BUILD_ROOT
