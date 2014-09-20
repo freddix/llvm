@@ -2,14 +2,14 @@
 
 Summary:	Low Level Virtual Machine
 Name:		llvm
-Version:	%{base_ver}.1
+Version:	%{base_ver}.2
 Release:	1
 License:	University of Illinois/NCSA Open Source License
 Group:		Development/Languages
 Source0:	http://llvm.org/releases/%{version}/%{name}-%{version}.src.tar.gz
-# Source0-md5:	b90697f4de35563ad6c35924defa8dd1
+# Source0-md5:	a20669f75967440de949ac3b1bad439c
 Source1:	http://llvm.org/releases/%{version}/cfe-%{version}.src.tar.gz
-# Source1-md5:	c64fdc567383211c9ac212d6f7b69263
+# Source1-md5:	87945973b7c73038871c5f849a818588
 Source2:	http://llvm.org/releases/3.4/compiler-rt-3.4.src.tar.gz
 # Source2-md5:	7938353e3a3bda85733a165e7ac4bb84
 Patch0:		%{name}-preserve-timestamp.patch
@@ -17,6 +17,7 @@ Patch1:		%{name}-linker.patch
 Patch2:		%{name}-freddix.patch
 URL:		http://llvm.org/
 BuildRequires:	bash
+BuildRequires:	binutils-devel
 BuildRequires:	bison
 BuildRequires:	flex
 BuildRequires:	groff
