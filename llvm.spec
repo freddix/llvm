@@ -1,9 +1,10 @@
+# based on PLD Linux spec git://git.pld-linux.org/packages/llvm.git
 %define		base_ver    3.4
 
 Summary:	Low Level Virtual Machine
 Name:		llvm
 Version:	%{base_ver}.2
-Release:	1
+Release:	2
 License:	University of Illinois/NCSA Open Source License
 Group:		Development/Languages
 Source0:	http://llvm.org/releases/%{version}/%{name}-%{version}.src.tar.gz
@@ -157,11 +158,9 @@ done
 %{__rm} $RPM_BUILD_ROOT%{_libdir}/*LLVMHello.*
 
 # Move documentation back to build directory
-%{__mv} $RPM_BUILD_ROOT/moredocs .
-%{__rm} moredocs/*.tar.gz
-
-%{__rm} $RPM_BUILD_ROOT%{_libdir}/libLLVM-%{base_ver}.so
-ln -s libLLVM-%{version}.so $RPM_BUILD_ROOT%{_libdir}/libLLVM-%{base_ver}.so
+rm -rf moredocs
+mv $RPM_BUILD_ROOT/moredocs .
+%{__rm} -v moredocs/*.tar.gz
 
 %clean
 rm -rf $RPM_BUILD_ROOT
